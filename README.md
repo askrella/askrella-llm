@@ -95,12 +95,10 @@ Response:
 }
 ```
 
-## License
+## GNU General Public License
 
-GNU General Public License
-==========================
 
-_Version 3, 29 June 2007_  
+_Version 3, 09 June 2023_  
 _Copyright © 2023 Askrella Software Agency UG (haftungsbeschränkt) &lt;<https://askrella.de/>&gt;_
 
 Everyone is permitted to copy and distribute verbatim copies of this license
