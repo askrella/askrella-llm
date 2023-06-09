@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Askrella LLM is a Flask-based API project that leverages [Langchain](https://github.com/hwchase17/langchain) and [LlamaIndex](https://github.com/jerryjliu/llama_index) to create a chat application powered by Language Model (LLM). This project allows you to ingest your own data from raw text or URLs and perform question-answering (Q&A) against it.
+Askrella LLM is a Flask-based project that leverages [Langchain](https://github.com/hwchase17/langchain) and [LlamaIndex](https://github.com/jerryjliu/llama_index) to create a REST API powered by LLM's. This API allows you to ingest your own data from raw text or URLs and perform question-answering (Q&A) against it.
 
 ## Key Features
 
