@@ -1,8 +1,14 @@
-# Askrella LLM
+# Askrella LLM: Custom Data Q&A
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Askrella LLM is a Flask-based API project that utilizes [Langchain](https://github.com/hwchase17/langchain) and [LlamaIndex](https://github.com/jerryjliu/llama_index) to create a LLM powered chat application. It provides endpoints for ingesting documents, allowing users to perform Q&A against their own data.
+Askrella LLM is a Flask-based API project that leverages [Langchain](https://github.com/hwchase17/langchain) and [LlamaIndex](https://github.com/jerryjliu/llama_index) to create a chat application powered by Language Model (LLM). This project allows you to ingest your own data from raw text or URLs and perform question-answering (Q&A) against it.
+
+## Key Features
+
+- Ingest your own data from raw text or URLs
+- Perform Q&A against your ingested data
+- Uses a local sentence transformer for generating embeddings, making it cost-effective
 
 ## Info about Models
 
@@ -39,9 +45,9 @@ OPENAI_API_KEY=<api_key>
 
 ## Ingesting Documents
 
-Creates a new collection of documents. The collection name is used to identify the collection in future requests.
+Create a new collection of documents. The collection name is used to identify the collection in future requests.
 
-POST `/collection/<collection>`
+**POST** `/collection/<collection>`
 
 Request payload example:
 
@@ -57,7 +63,7 @@ Request payload example:
         "https://pastebin.com/raw/stzZ6S1J"
     ]
 }
-````
+```
 
 Response:
 
@@ -71,13 +77,13 @@ Response:
 
 Ask questions against your ingested data.
 
-POST `/collection/<collection>/query`
+**POST** `/collection/<collection>/query`
 
 Request payload example:
 
 ```json
 {
-    "prompt": "Who is Askrella?",
+    "prompt": "Who is Askrella?"
 }
 ```
 
@@ -88,7 +94,6 @@ Response:
     "response": "Askrella is a software agency that specializes in planning and developing cloud projects, offering tailored solutions and captivating web design using React.js, Node.js, Flutter, and Golang. They focus on the leading cloud platform, Amazon AWS, to ensure robust and scalable solutions for their clients. Askrella was founded in December 2022 by Steven Hornbogen, Stanislav Hetzel, and Paul Seebach. Their team of skilled professionals provides comprehensive support throughout the entire project lifecycle, including project planning, wireframe and mockup creation, quality assurance testing, deployment, and ongoing maintenance."
 }
 ```
-
 
 ## License
 
