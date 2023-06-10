@@ -106,5 +106,29 @@ Response:
     "response": "Askrella is a software agency that specializes in planning and developing cloud projects, offering tailored solutions and captivating web design using React.js, Node.js, Flutter, and Golang. They focus on the leading cloud platform, Amazon AWS, to ensure robust and scalable solutions for their clients. Askrella was founded in December 2022 by Steven Hornbogen, Stanislav Hetzel, and Paul Seebach. Their team of skilled professionals provides comprehensive support throughout the entire project lifecycle, including project planning, wireframe and mockup creation, quality assurance testing, deployment, and ongoing maintenance."
 }
 ```
+
+## Crawl website url's
+
+Crawl a website and get all url's from it.
+
+**POST** `/crawl`
+
+Request payload example:
+
+```json
+{
+    "url": "https://example.com"
+}
+```
+
+Response:
+```json
+{
+    "urls": [
+        "https://www.iana.org/domains/example"
+    ]
+}
+```
+
 ## License
 This Software is AGPL v3 licensed. Checkout [here](LICENSE)

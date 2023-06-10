@@ -16,6 +16,9 @@ from llama_index import (
     load_index_from_storage
 )
 
+# Crawl
+from crawl import crawl_website
+
 # Utils
 from dotenv import load_dotenv
 
@@ -57,6 +60,28 @@ def validate_api_key(req):
     api_key_header = authorization_header[len(bearer):]
 
     return api_key_header == api_key
+
+# Input { url }
+# Output { urls: [] }
+@api.route("/crawl", methods=['POST'])
+def crawl():
+    # Validate API key
+    if not validate_api_key(request):
+        return jsonify({ "error": "Invalid API key" })
+
+    # Json input
+    url = request.json['url']
+
+    # Validate
+    if url == None or len(url) == 0:
+        return jsonify({ "error": "No url to crawl" })
+
+    # Crawl
+    urls = crawl_website(url)
+
+    return jsonify({
+        "urls": urls,
+    })
 
 # Input { web: [url], text: [text] }
 @api.route("/collection/<collection>", methods=['POST'])
