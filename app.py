@@ -41,12 +41,28 @@ service_context = ServiceContext.from_defaults(
     embed_model=embed_model
 )
 
-# Chroma DB
+# Flask
 api = Flask(__name__)
+api_key = os.getenv("API_KEY", "askrella")
+
+def validate_api_key(req):
+    authorization_header = request.headers.get("Authorization")
+    bearer = "Bearer "
+
+    if not authorization_header or not authorization_header.startswith(bearer):
+        return False
+
+    api_key_header = authorization_header[len(bearer):]
+
+    return api_key_header == api_key
 
 # Input { web: [url], text: [text] }
 @api.route("/collection/<collection>", methods=['POST'])
 def create_collection(collection: str):
+    # Validate API key
+    if not validate_api_key(request):
+        return jsonify({ "error": "Invalid API key" })
+
     # Json input
     ingest_text = request.json['text']
     ingest_urls = request.json['urls']
@@ -86,6 +102,10 @@ def create_collection(collection: str):
 # Input { prompt }
 @api.route("/collection/<collection>/query", methods=['POST'])
 def query_collection(collection: str):
+    # Validate API key
+    if not validate_api_key(request):
+        return jsonify({ "error": "Invalid API key" })
+
     # Json input
     prompt = request.json['prompt']
 

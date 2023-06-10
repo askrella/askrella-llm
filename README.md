@@ -39,8 +39,20 @@ The Askrella LLM project requires the following environment variables to be set.
 # REST API Port
 PORT=8080
 
+# REST API - API KEY, default: "askrella"
+API_KEY=<rest_api_key>
+
 # OpenAI API key
-OPENAI_API_KEY=<api_key>
+OPENAI_API_KEY=<openai_api_key>
+```
+
+## Authorization
+
+All requests to the Askrella LLM REST API require an API key to be set in the `Authorization` header.
+
+Example:
+```
+Authorization: Bearer <rest_api_key>
 ```
 
 ## Ingesting Documents
