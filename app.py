@@ -46,7 +46,7 @@ api = Flask(__name__)
 api_key = os.getenv("API_KEY", "askrella")
 
 def validate_api_key(req):
-    authorization_header = request.headers.get("Authorization")
+    authorization_header = req.headers.get("Authorization")
     bearer = "Bearer "
 
     if not authorization_header or not authorization_header.startswith(bearer):
@@ -102,10 +102,6 @@ def create_collection(collection: str):
 # Input { prompt }
 @api.route("/collection/<collection>/query", methods=['POST'])
 def query_collection(collection: str):
-    # Validate API key
-    if not validate_api_key(request):
-        return jsonify({ "error": "Invalid API key" })
-
     # Json input
     prompt = request.json['prompt']
 
