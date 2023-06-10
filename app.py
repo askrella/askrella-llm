@@ -58,14 +58,6 @@ def validate_api_key(req):
 
     return api_key_header == api_key
 
-# Cors
-@api.after_request 
-def after_request(response):
-    header = response.headers
-    header['Access-Control-Allow-Origin'] = '*'
-    # Other headers can be added here if needed
-    return response
-
 # Input { web: [url], text: [text] }
 @api.route("/collection/<collection>", methods=['POST'])
 def create_collection(collection: str):
