@@ -2,6 +2,7 @@ import os
 
 # Flask
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # Langchain
 from langchain.chat_models import ChatOpenAI
@@ -43,6 +44,7 @@ service_context = ServiceContext.from_defaults(
 
 # Flask
 api = Flask(__name__)
+CORS(api) # Enable CORS
 api_key = os.getenv("API_KEY", "askrella")
 
 def validate_api_key(req):
