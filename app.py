@@ -51,6 +51,7 @@ service_context = ServiceContext.from_defaults(
 )
 
 # Build whisper model
+print("Preparing OpenAI whisper...")
 whisper_model = whisper.load_model("small")
 
 # Flask
@@ -155,6 +156,27 @@ def create_collection(collection: str):
     index.storage_context.persist(
         os.path.join(VECTOR_DATA_PATH, collection)
     )
+
+    return jsonify({
+        "success": True,
+    })
+
+# Delete collection
+@api.route("/collection/<collection>", methods=['DELETE'])
+def delete_collection(collection: str):
+    # Validate API key
+    if not validate_api_key(request):
+        return jsonify({ "error": "Invalid API key" })
+
+    # Delete collection
+    collection_data_path = os.path.join(VECTOR_DATA_PATH, collection)
+
+    # Check if index exists
+    if not os.path.exists(collection_data_path):
+        return jsonify({ "error": f"Collection {collection} does not exist" })
+
+    # Delete collection
+    os.rmdir(collection_data_path)
 
     return jsonify({
         "success": True,

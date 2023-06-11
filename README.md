@@ -92,6 +92,20 @@ Response:
 }
 ```
 
+## Delete collection
+
+Delete a collection of documents.
+
+**DELETE** `/collection/<collection>`
+
+Response:
+
+```json
+{
+    "success": true
+}
+```
+
 ## Querying Documents
 
 Ask questions against your ingested data.
