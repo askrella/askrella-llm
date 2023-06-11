@@ -16,11 +16,16 @@ from llama_index import (
     load_index_from_storage
 )
 
+# OpenAI Whisper
+import whisper
+
 # Crawl
 from crawl import crawl_website
 
 # Utils
 from dotenv import load_dotenv
+import requests
+import tempfile
 
 # Contants
 VECTOR_DATA_PATH = "./data"
@@ -44,6 +49,9 @@ service_context = ServiceContext.from_defaults(
     llm_predictor=llm_predictor,
     embed_model=embed_model
 )
+
+# Build whisper model
+whisper_model = whisper.load_model("small")
 
 # Flask
 api = Flask(__name__)
@@ -93,10 +101,11 @@ def create_collection(collection: str):
     # Json input
     ingest_text = request.json['text']
     ingest_urls = request.json['urls']
+    audio_urls = request.json['audio_urls']
 
     # Validate
-    if (ingest_text == None or len(ingest_text) == 0) and (ingest_urls == None or len(ingest_urls) == 0):
-        return jsonify({ "error": "No text or web urls to ingest" })
+    if (ingest_text == None or len(ingest_text) == 0) and (ingest_urls == None or len(ingest_urls) == 0) and (audio_urls == None or len(audio_urls) == 0):
+        return jsonify({ "error": "Nothing to ingest" })
 
     # Build documents
     documents = []
@@ -110,6 +119,26 @@ def create_collection(collection: str):
     if ingest_text != None and len(ingest_text) > 0:
         raw_text_docs = [Document(text=text) for text in ingest_text]
         documents.extend(raw_text_docs)
+
+    # Ingest audio urls
+    if audio_urls != None and len(audio_urls) > 0:
+        for audio_url in audio_urls:
+            try:
+                # Download audio file into temp folder
+                audio_file = requests.get(audio_url, allow_redirects=True)
+                temp_audio_file = tempfile.NamedTemporaryFile(delete=False)
+
+                with open(temp_audio_file.name, 'wb') as f:
+                    f.write(audio_file.content)
+
+                # Transcribe audio file
+                whisper_result = whisper_model.transcribe(temp_audio_file.name)
+                whisper_doc = Document(text=whisper_result.text, metadata={"audio_url": audio_url})
+
+                # Add to documents
+                documents.append(whisper_doc)
+            except:
+                print(f"Failed to ingest audio url: {audio_url}")
 
     # Create index and save index
     index = VectorStoreIndex.from_documents(
