@@ -133,12 +133,17 @@ def create_collection(collection: str):
 
                 # Transcribe audio file
                 whisper_result = whisper_model.transcribe(temp_audio_file.name)
-                whisper_doc = Document(text=whisper_result.text, metadata={"audio_url": audio_url})
+                whisper_result_text = whisper_result["text"]
+
+                whisper_doc = Document(text=whisper_result_text, extra_info={
+                    "audio_url": audio_url,
+                })
 
                 # Add to documents
                 documents.append(whisper_doc)
-            except:
+            except Exception as e:
                 print(f"Failed to ingest audio url: {audio_url}")
+                print(e)
 
     # Create index and save index
     index = VectorStoreIndex.from_documents(

@@ -61,6 +61,8 @@ Authorization: Bearer <rest_api_key>
 
 Create a new collection of documents. The collection name is used to identify the collection in future requests.
 
+For ingesting audio files, you have to install ffmpeg. Follow the instructions [here](https://github.com/openai/whisper#setup)
+
 **POST** `/collection/<collection>`
 
 Request:
@@ -75,6 +77,9 @@ Request:
         "https://askrella.de/",
         "https://en.wikipedia.org/wiki/OpenAI",
         "https://pastebin.com/raw/stzZ6S1J"
+    ],
+    "audio_urls": [
+        "https://audio-samples.github.io/samples/mp3/blizzard_biased/sample-0.mp3"
     ]
 }
 ```
