@@ -50,6 +50,8 @@ OPENAI_API_KEY=<openai_api_key>
 
 All requests to the Askrella LLM REST API require an API key to be set in the `Authorization` header.
 
+Only the ingest endpoint is protected by the API key. The query endpoint is not protected by the API key.
+
 Example:
 ```
 Authorization: Bearer <rest_api_key>
@@ -61,7 +63,7 @@ Create a new collection of documents. The collection name is used to identify th
 
 **POST** `/collection/<collection>`
 
-Request payload example:
+Request:
 
 ```json
 {
@@ -91,7 +93,7 @@ Ask questions against your ingested data.
 
 **POST** `/collection/<collection>/query`
 
-Request payload example:
+Request:
 
 ```json
 {
@@ -113,7 +115,7 @@ Crawl a website and get all url's from it.
 
 **POST** `/crawl`
 
-Request payload example:
+Request:
 
 ```json
 {

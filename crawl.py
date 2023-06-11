@@ -10,6 +10,9 @@ def crawl_website(url):
     # Set up Selenium with headless Chrome
     options = Options()
     options.add_argument("--headless")
+    options.add_argument('--no-sandbox')
+    options.add_argument('--window-size=1600,1080')
+    options.add_argument('--disable-gpu')
     driver = webdriver.Chrome(options=options)
 
     # Base url without path

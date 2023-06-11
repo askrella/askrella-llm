@@ -138,6 +138,11 @@ def query_collection(collection: str):
     
     # Load index
     collection_data_path = os.path.join(VECTOR_DATA_PATH, collection)
+
+    # Check if index exists
+    if not os.path.exists(collection_data_path):
+        return jsonify({ "error": f"Collection {collection} does not exist" })
+
     print(f"Loading index from {collection_data_path}...")
 
     # Build StorageContext
