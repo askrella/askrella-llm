@@ -24,10 +24,10 @@ from crawl import crawl_website
 
 # Utils
 from dotenv import load_dotenv
-import requests
 import tempfile
+import shutil
 
-# Contants
+# Constants
 VECTOR_DATA_PATH = "./data"
 
 # Load .env
@@ -56,34 +56,38 @@ whisper_model = whisper.load_model("small")
 
 # Flask
 api = Flask(__name__)
-CORS(api) # Enable CORS
+CORS(api)  # Enable CORS
 api_key = os.getenv("API_KEY", "askrella")
 
-def validate_api_key(req):
-    authorization_header = req.headers.get("Authorization")
+
+def validate_api_key(api_key_header):
+    return api_key_header == api_key
+
+
+@api.before_request
+def check_api_key():
+    authorization_header = request.headers.get("Authorization")
     bearer = "Bearer "
 
     if not authorization_header or not authorization_header.startswith(bearer):
-        return False
+        return jsonify({"error": "Invalid API key"}), 401
 
     api_key_header = authorization_header[len(bearer):]
 
-    return api_key_header == api_key
+    if not validate_api_key(api_key_header):
+        return jsonify({"error": "Invalid API key"}), 401
+
 
 # Input { url }
 # Output { urls: [] }
 @api.route("/crawl", methods=['POST'])
 def crawl():
-    # Validate API key
-    if not validate_api_key(request):
-        return jsonify({ "error": "Invalid API key" })
-
     # Json input
-    url = request.json['url']
+    url = request.json.get('url')
 
     # Validate
-    if url == None or len(url) == 0:
-        return jsonify({ "error": "No url to crawl" })
+    if url is None or len(url) == 0:
+        return jsonify({"error": "No URL to crawl"}), 400
 
     # Crawl
     urls = crawl_website(url)
@@ -92,59 +96,78 @@ def crawl():
         "urls": urls,
     })
 
-# Input { web: [url], text: [text] }
-@api.route("/collection/<collection>", methods=['POST'])
-def create_collection(collection: str):
-    # Validate API key
-    if not validate_api_key(request):
-        return jsonify({ "error": "Invalid API key" })
 
-    # Json input
-    ingest_text = request.json['text']
-    ingest_urls = request.json['urls']
-    audio_urls = request.json['audio_urls']
+@api.route("/collection/<collection>/ingest", methods=['POST'])
+def ingest_collection(collection: str):
+    # Form file input
+    ingest_file = request.files.get('file')
 
     # Validate
-    if (ingest_text == None or len(ingest_text) == 0) and (ingest_urls == None or len(ingest_urls) == 0) and (audio_urls == None or len(audio_urls) == 0):
-        return jsonify({ "error": "Nothing to ingest" })
+    if ingest_file is None:
+        return jsonify({"error": "No file to ingest"}), 400
 
+    # Check if index exists
+    collection_data_path = os.path.join(VECTOR_DATA_PATH, collection)
+
+    if not os.path.exists(collection_data_path):
+        return jsonify({"error": f"Collection {collection} does not exist"}), 404
+
+    # Build StorageContext
+    storage_ctx = StorageContext.from_defaults(
+        persist_dir=collection_data_path
+    )
+
+    # Load index
+    index: VectorStoreIndex = load_index_from_storage(
+        storage_context=storage_ctx,
+        service_context=service_context
+    )
+
+    # Depending on the type of extension, ingest
+    ingest_file_ext = ingest_file.filename.split(".")[-1]
+
+    if ingest_file_ext == "txt":
+        # Read text from file
+        content = ingest_file.read().decode("utf-8")
+
+        # Build document
+        document = Document(text=content)
+        index.insert(document)
+    elif ingest_file_ext in ["mp3", "wav", "ogg", "audio"]:
+        # Download audio file into a temporary folder
+        temp_audio_file = tempfile.NamedTemporaryFile(delete=False)
+
+        # Write ingest file to temp file
+        ingest_file.save(temp_audio_file.name)
+
+        # Transcribe audio file
+        whisper_result = whisper_model.transcribe(temp_audio_file.name)
+        whisper_result_text = whisper_result["text"]
+
+        # Build document
+        document = Document(text=whisper_result_text)
+        index.insert(document)
+
+        # Delete temp file
+        os.unlink(temp_audio_file.name)
+    else:
+        return jsonify({"error": "Invalid file type"}), 400
+
+    # Save index
+    index.storage_context.persist(
+        os.path.join(VECTOR_DATA_PATH, collection)
+    )
+
+    return jsonify({
+        "success": True,
+    })
+
+
+# Input { }
+@api.route("/collection/<collection>", methods=['POST'])
+def create_collection(collection: str):
     # Build documents
     documents = []
-
-    # Ingest web urls
-    if len(ingest_urls) > 0:
-        web_documents = BeautifulSoupWebReader().load_data(ingest_urls)
-        documents.extend(web_documents)
-
-    # Ingest raw text
-    if ingest_text != None and len(ingest_text) > 0:
-        raw_text_docs = [Document(text=text) for text in ingest_text]
-        documents.extend(raw_text_docs)
-
-    # Ingest audio urls
-    if audio_urls != None and len(audio_urls) > 0:
-        for audio_url in audio_urls:
-            try:
-                # Download audio file into temp folder
-                audio_file = requests.get(audio_url, allow_redirects=True)
-                temp_audio_file = tempfile.NamedTemporaryFile(delete=False)
-
-                with open(temp_audio_file.name, 'wb') as f:
-                    f.write(audio_file.content)
-
-                # Transcribe audio file
-                whisper_result = whisper_model.transcribe(temp_audio_file.name)
-                whisper_result_text = whisper_result["text"]
-
-                whisper_doc = Document(text=whisper_result_text, extra_info={
-                    "audio_url": audio_url,
-                })
-
-                # Add to documents
-                documents.append(whisper_doc)
-            except Exception as e:
-                print(f"Failed to ingest audio url: {audio_url}")
-                print(e)
 
     # Create index and save index
     index = VectorStoreIndex.from_documents(
@@ -161,43 +184,41 @@ def create_collection(collection: str):
         "success": True,
     })
 
+
 # Delete collection
 @api.route("/collection/<collection>", methods=['DELETE'])
 def delete_collection(collection: str):
-    # Validate API key
-    if not validate_api_key(request):
-        return jsonify({ "error": "Invalid API key" })
-
     # Delete collection
     collection_data_path = os.path.join(VECTOR_DATA_PATH, collection)
 
     # Check if index exists
     if not os.path.exists(collection_data_path):
-        return jsonify({ "error": f"Collection {collection} does not exist" })
+        return jsonify({"error": f"Collection {collection} does not exist"}), 404
 
     # Delete collection
-    os.rmdir(collection_data_path)
+    shutil.rmtree(collection_data_path)
 
     return jsonify({
         "success": True,
     })
 
+
 # Input { prompt }
 @api.route("/collection/<collection>/query", methods=['POST'])
 def query_collection(collection: str):
     # Json input
-    prompt = request.json['prompt']
+    prompt = request.json.get('prompt')
 
     # Validate
-    if prompt == None or len(prompt) == 0:
-        return jsonify({ "error": "No prompt to query" })
-    
+    if prompt is None or len(prompt) == 0:
+        return jsonify({"error": "No prompt to query"}), 400
+
     # Load index
     collection_data_path = os.path.join(VECTOR_DATA_PATH, collection)
 
     # Check if index exists
     if not os.path.exists(collection_data_path):
-        return jsonify({ "error": f"Collection {collection} does not exist" })
+        return jsonify({"error": f"Collection {collection} does not exist"}), 404
 
     print(f"Loading index from {collection_data_path}...")
 
@@ -207,7 +228,7 @@ def query_collection(collection: str):
     )
 
     # Load index
-    index = load_index_from_storage(
+    index: VectorStoreIndex = load_index_from_storage(
         storage_context=storage_ctx,
         service_context=service_context
     )
@@ -221,10 +242,11 @@ def query_collection(collection: str):
 
     return jsonify({
         "response": response.response,
-    })
+    }), 200
+
 
 if __name__ == '__main__':
     api_port = os.getenv("PORT", 8080)
-    
+
     print(f"Starting API on port {api_port}...")
     api.run(port=api_port)
