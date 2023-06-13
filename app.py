@@ -55,7 +55,7 @@ whisper_model = whisper.load_model("small")
 
 # Flask
 api = Flask(__name__)
-CORS(api, origins=["http://localhost:5173"])  # Enable CORS
+CORS(api, resources={r"/*": {"origins": "http://localhost:5173"}})  # Enable CORS
 api_key = os.getenv("API_KEY", "askrella")
 
 @api.before_request
