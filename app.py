@@ -11,8 +11,7 @@ from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 # Llama index
 from llama_index import (
     ServiceContext, StorageContext, VectorStoreIndex,
-    BeautifulSoupWebReader, LLMPredictor,
-    LangchainEmbedding, Document,
+    LLMPredictor, LangchainEmbedding, Document,
     load_index_from_storage
 )
 
@@ -59,11 +58,6 @@ api = Flask(__name__)
 CORS(api)  # Enable CORS
 api_key = os.getenv("API_KEY", "askrella")
 
-
-def validate_api_key(api_key_header):
-    return api_key_header == api_key
-
-
 @api.before_request
 def check_api_key():
     authorization_header = request.headers.get("Authorization")
@@ -74,9 +68,8 @@ def check_api_key():
 
     api_key_header = authorization_header[len(bearer):]
 
-    if not validate_api_key(api_key_header):
+    if api_key_header != api_key:
         return jsonify({"error": "Invalid API key"}), 401
-
 
 # Input { url }
 # Output { urls: [] }
@@ -95,7 +88,6 @@ def crawl():
     return jsonify({
         "urls": urls,
     })
-
 
 @api.route("/collection/<collection>/ingest", methods=['POST'])
 def ingest_collection(collection: str):
@@ -153,6 +145,9 @@ def ingest_collection(collection: str):
     else:
         return jsonify({"error": "Invalid file type"}), 400
 
+    # Delete old index
+    shutil.rmtree(collection_data_path)
+
     # Save index
     index.storage_context.persist(
         os.path.join(VECTOR_DATA_PATH, collection)
@@ -161,7 +156,6 @@ def ingest_collection(collection: str):
     return jsonify({
         "success": True,
     })
-
 
 # Input { }
 @api.route("/collection/<collection>", methods=['POST'])
@@ -184,7 +178,6 @@ def create_collection(collection: str):
         "success": True,
     })
 
-
 # Delete collection
 @api.route("/collection/<collection>", methods=['DELETE'])
 def delete_collection(collection: str):
@@ -201,7 +194,6 @@ def delete_collection(collection: str):
     return jsonify({
         "success": True,
     })
-
 
 # Input { prompt }
 @api.route("/collection/<collection>/query", methods=['POST'])
@@ -243,7 +235,6 @@ def query_collection(collection: str):
     return jsonify({
         "response": response.response,
     }), 200
-
 
 if __name__ == '__main__':
     api_port = os.getenv("PORT", 8080)
