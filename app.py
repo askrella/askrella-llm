@@ -63,6 +63,8 @@ def check_api_key():
     authorization_header = request.headers.get("Authorization")
     bearer = "Bearer "
 
+    print(f"Clien tries auth: {authorization_header}")
+
     if not authorization_header or not authorization_header.startswith(bearer):
         return jsonify({"error": "Invalid API key"}), 401
 
