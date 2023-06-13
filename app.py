@@ -60,10 +60,15 @@ api_key = os.getenv("API_KEY", "askrella")
 
 @api.before_request
 def check_api_key():
+    # If options call, return 200
+    if request.method == "OPTIONS":
+        return jsonify({"success": True}), 200
+
+    # Validate Authorization header
     authorization_header = request.headers.get("Authorization")
     bearer = "Bearer "
 
-    print(f"Clien tries auth: {authorization_header}")
+    print(f"Client tries auth: {authorization_header}")
 
     if not authorization_header or not authorization_header.startswith(bearer):
         return jsonify({"error": "Invalid API key"}), 401
