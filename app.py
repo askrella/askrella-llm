@@ -2,7 +2,7 @@ import os
 
 # Flask
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 # Langchain
 from langchain.chat_models import ChatOpenAI
@@ -55,7 +55,7 @@ whisper_model = whisper.load_model("small")
 
 # Flask
 api = Flask(__name__)
-CORS(api)  # Enable CORS
+CORS(api, origins=["http://localhost:5173"])  # Enable CORS
 api_key = os.getenv("API_KEY", "askrella")
 
 @api.before_request
@@ -73,6 +73,7 @@ def check_api_key():
 
 # Input { url }
 # Output { urls: [] }
+@cross_origin()
 @api.route("/crawl", methods=['POST'])
 def crawl():
     # Json input
@@ -89,6 +90,7 @@ def crawl():
         "urls": urls,
     })
 
+@cross_origin()
 @api.route("/collection/<collection>/ingest", methods=['POST'])
 def ingest_collection(collection: str):
     # Form file input
@@ -158,6 +160,7 @@ def ingest_collection(collection: str):
     })
 
 # Input { }
+@cross_origin()
 @api.route("/collection/<collection>", methods=['POST'])
 def create_collection(collection: str):
     # Build documents
@@ -179,6 +182,7 @@ def create_collection(collection: str):
     })
 
 # Delete collection
+@cross_origin()
 @api.route("/collection/<collection>", methods=['DELETE'])
 def delete_collection(collection: str):
     # Delete collection
